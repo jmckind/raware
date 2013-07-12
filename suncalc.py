@@ -1,38 +1,68 @@
 from ephem import *
 
-locations = {
-	'Dallas/Ft. Worth': ('32.775833', '-96.796667'),
-	'London': ('51.507222', '-0.1275'),
-	'Hong Kong': ('22.24819', '114.20340'),
-	'Australia': ('-23.484168', '134.119034'),
-	'Los Angeles': ('34.05', '-118.25'),
-	'New York': ('40.67', '-73.94'),
-}
+_default_locations = [
+	'Chicago',
+	'Atlanta',
+	'New York',
+	'London',
+	'Frankfurt',
+	'New Delhi',
+	'Hong Kong',
+	'Tokyo',
+	'Los Angeles'
+]
 
-observers = dict()
+def fetch_observers(locations = _default_locations):
+	result = []
+	for location in locations:
+		result.append(city(location))
+	return result
 
-for location in locations:
-	coordinates = locations.get(location)
-
-	o = Observer()
-	o.lat, o.lon = coordinates
-
-	observers[location] = o
-
-sun = Sun()
+def observe_body(observer, body):
+	body.compute(observer)
 	
-for observer_name in observers:
-	observer = observers[observer_name]
+	print observer.name
+	print "\tAltitude: %s Azimuth: %s" % (body.alt, body.az)
 
-	sun.compute(observer)
+	local_sunrise = localtime(observer.next_rising(body))
+	local_sunset = localtime(observer.next_setting(body))
 
-	print observer_name
-	print "\tAltitude: %s Azimuth: %s" % (sun.alt, sun.az)
-
-	local_sunrise = localtime(observer.next_rising(sun)).strftime('%I:%M %p')
-	local_sunset = localtime(observer.next_setting(sun)).strftime('%I:%M %p')
+	fmt_sunrise = local_sunrise.strftime('%I:%M %p')
+	fmt_sunset = local_sunset.strftime('%I:%M %p')
 
 	if local_sunrise > local_sunset:
-		print "\tToday's sunset is at %s. Tomorrow's sunrise is at %s." % (local_sunset, local_sunrise)
+		print "\tSetting at %s. Rising at %s." % (fmt_sunset, fmt_sunrise)
 	else:
-		print "\tToday's sunrise is at %s. Today's sunset is at %s. " % (local_sunrise, local_sunset)
+		print "\tRising at %s. Setting at %s. " % (fmt_sunrise, fmt_sunset)
+
+def observe_sun_altitude(observer):
+	sun = Sun()
+	sun.compute(observer)
+	return sun.alt
+
+def display_body_stats(body):
+	print body.name
+	for observer in fetch_observers():
+		observe_body(observer, body)
+
+def display_sunniest_location():
+	rax_datacenter_cities = [
+		'Dallas',
+		'Chicago',
+		'Washington',
+		'London',
+		'Hong Kong',
+		'Sydney'
+	]
+
+	observers = fetch_observers(rax_datacenter_cities)
+	observers.sort(key=observe_sun_altitude, reverse=True)
+
+	print "The sunniest location is %s" % observers[0].name
+
+def main():
+	display_body_stats(Sun())
+	display_sunniest_location()
+
+if __name__ == "__main__":
+    main()
