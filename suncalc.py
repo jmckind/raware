@@ -46,7 +46,7 @@ def display_body_stats(body):
 		observe_body(observer, body)
 
 def display_sunniest_location():
-	rax_datacenter_cities = [
+	locations = [
 		'Dallas',
 		'Chicago',
 		'Washington',
@@ -55,7 +55,7 @@ def display_sunniest_location():
 		'Sydney'
 	]
 
-	observers = fetch_observers(rax_datacenter_cities)
+	observers = fetch_observers(locations)
 	observers.sort(key=observe_sun_altitude, reverse=True)
 
 	print "The sunniest location is %s" % observers[0].name
